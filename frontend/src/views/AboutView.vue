@@ -1,12 +1,12 @@
 <template>
   <div class="about">
-    <ParticipationFormulaire />
+    <ProjetForm />
 
   </div>
 </template>
 
 <script setup>
-import ParticipationFormulaire from "@/components/ParticipationFormulaire.vue";
+import ProjetForm from "@/components/ProjetForm.vue";
 </script>
 
 <style>
