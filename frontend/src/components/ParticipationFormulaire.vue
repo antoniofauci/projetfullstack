@@ -1,201 +1,102 @@
 <template>
-  <div class="card">
-    <h2>Enregistrer une participation</h2>
-
-    <div class="form-group">
-      <label for="personne">Personne</label>
-      <select id="personne" v-model="data.formulaire.personne">
-        <option v-for="p in data.personnes" :key="p.matricule" :value="p">
-          {{ p.nom }} ({{ p.matricule }})
-        </option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label for="projet">Projet</label>
-      <select id="projet" v-model="data.formulaire.projet">
-        <option v-for="p in data.projets" :key="p.id" :value="p">
-          {{ p.nom }}
-        </option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label for="role">Rôle</label>
-      <input id="role" v-model="data.formulaire.role" type="text" placeholder="Développeur">
-    </div>
-
-    <div class="form-group">
-      <label>Pourcentage</label>
-      <input
-        type="range"
-        v-model="pourcentageAffiche"
-        min="0"
-        max="100"
-        step="5"
-        @input="mettreAJourPourcentage"
-      >
-      <p>{{ pourcentageAffiche }}%</p>
-    </div>
-
-    <button class="btn" @click="enregistrerParticipation">Enregistrer</button>
+  <div class="participation-form">
+    <form>
+      <div class="form-group">
+        <label for="personne">Personne</label>
+        <select id="personne" v-model="personne" class="form-control">
+          <option value="personne1">Personne 1</option>
+          <option value="personne2">Personne 2</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="projet">Projet</label>
+        <select id="projet" v-model="projet" class="form-control">
+          <option value="projet1">Projet 1</option>
+          <option value="projet2">Projet 2</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="role">Rôle</label>
+        <input type="text" id="role" v-model="role" class="form-control" />
+      </div>
+      <div class="form-group">
+        <label for="pourcentage">Pourcentage</label>
+        <input type="range" id="pourcentage" v-model="pourcentage" min="0" max="100" />
+        <span>{{ pourcentage }}%</span>
+      </div>
+      <button type="submit" class="submit-button">Enregistrer</button>
+    </form>
   </div>
 </template>
 
 <script setup>
-import {onMounted, reactive, ref} from "vue";
-import doAjaxRequest from "@/util/util.js";
+import { ref } from 'vue';
 
-
-const participationVide = {
-  personne: "",
-  projet: "",
-  role: "",
-  pourcentage: 0.0,
-};
-
-const pourcentageAffiche = ref(0);
-
-const mettreAJourPourcentage = () => {
-  data.formulaire.pourcentage = pourcentageAffiche.value / 100;
-};
-
-let data = reactive({
-  formulaire: { ...participationVide },
-  personnes: [],
-  projets: [],
-});
-
-async function enregistrerParticipation() {
-  if (!data.formulaire.personne || !data.formulaire.projet) {
-    alert("Veuillez sélectionner une personne et un projet !");
-    return;
-  }
-
-  const personneHref = data.formulaire.personne._links.self.href;
-  const projetHref = data.formulaire.projet._links.self.href;
-
-
-  if (await participationExiste(personneHref, projetHref)) {
-    alert("Cette personne participe déjà à ce projet !");
-    return;
-  }
-
-  const options = {
-    method: "POST",
-    body: JSON.stringify({
-      personne: personneHref,
-      projet: projetHref,
-      role: data.formulaire.role,
-      pourcentage: data.formulaire.pourcentage / 100 // ✅ Format correct
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  };
-
-  try {
-    const response = await fetch("/api/participations", options);
-    if (!response.ok) throw new Error("Échec de l'enregistrement");
-
-    alert("Participation enregistrée avec succès !");
-    data.formulaire = { personne: null, projet: null, role: "", pourcentage: 0 };
-  } catch (error) {
-    alert("Erreur lors de l'enregistrement : " + error.message);
-  }
-}
-
-
-function refresh() {
-  doAjaxRequest("/api/personnes")
-    .then((result) => {
-      data.personnes = result._embedded.personnes;
-    })
-    .catch((error) => alert(error.message));
-
-  doAjaxRequest("/api/projets")
-    .then((result) => {
-      data.projets = result._embedded.projets;
-    })
-    .catch((error) => alert(error.message));
-}
-
-
-onMounted(refresh);
-
-async function participationExiste(personneHref, projetHref) {
-  try {
-    const response = await fetch("/api/participations");
-    const data = await response.json();
-
-    return data._embedded.participations.some(p =>
-      p._links.personne.href === personneHref &&
-      p._links.projet.href === projetHref
-    );
-  } catch (error) {
-    console.error("Erreur lors de la vérification :", error);
-    return false;
-  }
-}
-
+const personne = ref('');
+const projet = ref('');
+const role = ref('');
+const pourcentage = ref(0);
 </script>
 
 <style scoped>
-.card {
-  max-width: 400px;
-  margin: 2rem auto;
+.participation-form {
+  max-width: 500px;
+  margin: 30px auto;
   padding: 20px;
-  background: #f9f9f9;
-  border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  text-align: left;
-}
-
-h2 {
-  text-align: center;
-  margin-bottom: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  font-family: 'Arial', sans-serif;
 }
 
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
-label {
-  font-weight: bold;
+.form-group label {
   display: block;
-  margin-bottom: 5px;
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #333;
 }
 
-select, input {
+.form-control {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-sizing: border-box;
+}
+
+.submit-button {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.submit-button:hover {
+  background-color: #0056b3;
 }
 
 input[type="range"] {
   width: 100%;
-  margin-top: 5px;
+  margin: 10px 0;
 }
 
-p {
+span {
+  font-size: 14px;
+  color: #555;
+  display: block;
   text-align: center;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.btn {
-  width: 100%;
-  background: #007BFF;
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.btn:hover {
-  background: #0056b3;
 }
 </style>
